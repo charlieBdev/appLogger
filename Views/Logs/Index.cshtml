@@ -1,0 +1,132 @@
+@model List<appLogger.Models.Logging>
+
+@{
+    ViewData["Title"] = "Logs Page";
+
+    var apps = ViewBag.Apps as List<string> ?? new List<string>();
+    var envs = ViewBag.Envs as List<string> ?? new List<string>();
+    var selectedApp = ViewBag.SelectedApp as string ?? "";
+    var selectedEnv = ViewBag.SelectedEnv as string ?? "";
+    var loggingDatabases = ViewBag.LoggingDatabases;
+}
+
+@section Styles {
+    <style>
+        h2 {
+            margin-bottom: 1rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 2rem;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        th {
+            background-color: #f2f2f2;
+            text-align: left;
+        }
+
+        select {
+            margin-right: 1rem;
+            padding: 0.375rem 0.75rem;
+            font-size: 1rem;
+            line-height: 1.5;
+            border: 1px solid #ced4da;
+            border-radius: 0.25rem;
+        }
+
+        button {
+            padding: 0.375rem 0.75rem;
+            font-size: 1rem;
+            line-height: 1.5;
+            border-radius: 0.25rem;
+            color: #fff;
+            background-color: #007bff;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+}
+
+<h2>Logs</h2>
+
+<form method="get" action="@Url.Action("Index", "Logs")" id="filterForm">
+    <label for="appName">App:</label>
+    <select id="appName" name="appName">
+        <option value="">Select App</option>
+        @foreach (var app in apps)
+        {
+            <option value="@app" selected="@(selectedApp == app)">@app</option>
+        }
+    </select>
+
+    <label for="envName">Environment:</label>
+    <select id="envName" name="envName">
+        <option value="">Select Environment</option>
+        @foreach (var env in envs)
+        {
+            <option value="@env" selected="@(selectedEnv == env)">@env</option>
+        }
+    </select>
+
+    <button type="submit">Submit</button>
+</form>
+
+@if (Model.Any())
+{
+    <table>
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Timestamp</th>
+                <th>Level</th>
+                <th>Message</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var log in Model)
+            {
+                <tr>
+                    <td>@log.Id</td>
+                    <td>@log.Timestamp</td>
+                    <td>@log.Level</td>
+                    <td>@log.Message</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p>No logs to display.</p>
+}
+
+@section Scripts {
+<script>
+    const loggingDatabases = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(loggingDatabases));
+    const appSelect = document.getElementById('appName');
+    const envSelect = document.getElementById('envName');
+
+    appSelect.addEventListener('change', function () {
+        const selectedApp = this.value;
+        const currentEnv = envSelect.value;
+
+        envSelect.innerHTML = '<option value="">Select Environment</option>';
+
+        if (selectedApp && loggingDatabases[selectedApp]) {
+            const envs = Object.keys(loggingDatabases[selectedApp]);
+            envs.forEach(env => {
+                const option = document.createElement('option');
+                option.value = env;
+                option.text = env;
+                if (env === currentEnv) option.selected = true; // preserve selection
+                envSelect.appendChild(option);
+            });
+        }
+    });
+</script>
+}
