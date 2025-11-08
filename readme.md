@@ -41,72 +41,105 @@ CREATE DATABASE app1_dev;
 CREATE DATABASE app1_prod;
 CREATE DATABASE app2_test;
 CREATE DATABASE app2_prod;
-CREATE DATABASE app3_staging;
-CREATE DATABASE app3_prod;
-```
+# appLogger
 
-Ensure **trust authentication** is enabled for local development so no username/password is required.
+`appLogger` is an ASP.NET Core MVC application to view logs from multiple PostgreSQL databases for different applications and environments. It supports dynamic database selection, light/dark theming, and is configured to work with local development databases using PostgreSQL’s trust authentication.
 
----
+## Features
 
-### 3. Configure Connection Strings
+- Select **Application** and **Environment** from dropdowns to view logs.
+- Multiple PostgreSQL databases configurable in `appsettings.Development.json` or user secrets.
+- Light/Dark theme using CSS variables.
+- Uses Entity Framework Core to connect dynamically to selected databases.
+- Seedable logging table for testing.
+- Dropdowns refresh dynamically based on selected app.
 
-Use **User Secrets** for local development:
+## Prerequisites
 
-```bash
-dotnet user-secrets init
-dotnet user-secrets set "LoggingDatabases:App1:Dev" "Host=localhost;Database=app1_dev"
-dotnet user-secrets set "LoggingDatabases:App1:Prod" "Host=localhost;Database=app1_prod"
-dotnet user-secrets set "LoggingDatabases:App2:Test" "Host=localhost;Database=app2_test"
-dotnet user-secrets set "LoggingDatabases:App2:Prod" "Host=localhost;Database=app2_prod"
-dotnet user-secrets set "LoggingDatabases:App3:Staging" "Host=localhost;Database=app3_staging"
-dotnet user-secrets set "LoggingDatabases:App3:Prod" "Host=localhost;Database=app3_prod"
-```
+- [.NET 8 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)
+- [PostgreSQL](https://www.postgresql.org/download/)
+- VS Code or another IDE (optional)
+- User Secrets (built into .NET SDK)
 
-> **Note:** No username or password is required for local trust authentication.
+## Getting Started
 
----
+1. **Clone the repository** and enter the folder:
 
-### 4. Seed the Logging Table
+    ```bash
+    git clone <repository-url>
+    cd appLogger
+    ```
 
-Before seeding, connect to each database in the CLI one at a time. Then create the `logging` table and insert sample data:
+2. **Start PostgreSQL** in the CLI and ensure trust authentication is enabled for local development (no username/password). Create local databases with generic names:
 
-```sql
--- Connect to each database first, e.g., \c app1_dev
-CREATE TABLE logging (
-    id SERIAL PRIMARY KEY,
-    timestamp TIMESTAMP NOT NULL,
-    level TEXT NOT NULL,
-    message TEXT NOT NULL
-);
+    ```sql
+    CREATE DATABASE app1_dev;
+    CREATE DATABASE app1_prod;
+    CREATE DATABASE app2_test;
+    CREATE DATABASE app2_prod;
+    CREATE DATABASE app3_staging;
+    CREATE DATABASE app3_prod;
+    ```
 
-INSERT INTO logging (timestamp, level, message)
-VALUES
-    (NOW(), 'INFO', 'Application started'),
-    (NOW(), 'ERROR', 'Something went wrong'),
-    (NOW(), 'WARNING', 'This is a warning');
-```
+3. **Create `appsettings.Development.json`** in the project root with the following content:
 
-Repeat for each database using different levels and messages.
+    ```json
+    {
+      "LoggingDatabases": {
+        "App1": {
+          "Dev": "Host=localhost;Database=app1_dev",
+          "Prod": "Host=localhost;Database=app1_prod"
+        },
+        "App2": {
+          "Test": "Host=localhost;Database=app2_test",
+          "Prod": "Host=localhost;Database=app2_prod"
+        },
+        "App3": {
+          "Staging": "Host=localhost;Database=app3_staging",
+          "Prod": "Host=localhost;Database=app3_prod"
+        }
+      }
+    }
+    ```
 
----
+    > **Note:** No username or password is required for local trust authentication. For production, use User Secrets to hide credentials:
 
-### 5. Run the Application
+    ```bash
+    dotnet user-secrets init
+    dotnet user-secrets set "LoggingDatabases:App1:Prod" "Host=prod-server;Database=app1_prod;Username=prodUser;Password=prodPassword"
+    ```
 
-```bash
-dotnet run
-```
+4. **Seed the logging table** in each database. Connect to each database in the CLI, e.g., `\c app1_dev`, then run:
 
-Open a browser at:
+    ```sql
+    CREATE TABLE logging (
+        id SERIAL PRIMARY KEY,
+        timestamp TIMESTAMP NOT NULL,
+        level TEXT NOT NULL,
+        message TEXT NOT NULL
+    );
 
-```
-http://localhost:{LocalPort}/Logs
-```
+    INSERT INTO logging (timestamp, level, message) VALUES
+        (NOW(), 'INFO', 'Application started'),
+        (NOW(), 'ERROR', 'Something went wrong'),
+        (NOW(), 'WARNING', 'This is a warning');
+    ```
 
-* Select the **App** and **Environment**.
-* Click **Submit** to view logs.
+    Repeat for each database using different levels and messages if desired.
 
----
+5. **Run the application** in development mode:
+
+    ```bash
+    dotnet watch run --environment Development
+    ```
+
+    Open a browser at:
+
+    ```
+    http://localhost:{LocalPort}/Logs
+    ```
+
+    Select the **App** and **Environment**, then click **Submit** to view logs. On first load, no logs are displayed until a selection is made.
 
 ## Light/Dark Theme
 
@@ -116,24 +149,22 @@ CSS variables define colors for light and dark themes:
 :root {
   --light-bg: #ffffff;
   --light-color: #121212;
-
   --dark-bg: #121212;
   --dark-color: #e0e0e0;
 }
 ```
 
-Use the `light-dark(light, dark)` helper to apply colors dynamically.
-
----
+Use the light-dark(light, dark) helper to apply colors dynamically.
 
 ## Development Notes
 
-* **`LoggingContext`** uses EF Core to connect dynamically to the selected database.
-* Controller passes **App and Environment lists** to the view.
-* **User secrets** keep development connection strings safe.
-* For production, use **secure credentials** and do not rely on trust authentication.
+LoggingContext uses EF Core to connect dynamically to the selected database.
 
----
+Controller passes App and Environment lists to the view.
+
+User secrets keep development/production connection strings safe.
+
+For production, use secure credentials; do not rely on trust authentication.
 
 ## Git Ignore
 
@@ -145,8 +176,6 @@ obj/
 *.user
 appsettings.Development.json
 ```
-
----
 
 ## License
 
