@@ -31,6 +31,10 @@ select.form-select {
     background-color: light-dark(var(--light-bg), var(--dark-bg));
 }
 
+p {
+    margin-bottom: 0;
+}
+
 .table {
     color: light-dark(var(--light-color), var(--dark-color));
     background-color: light-dark(var(--light-bg), var(--dark-bg));

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using appLogger.Models;
 
 namespace appLogger.Controllers
@@ -28,15 +29,15 @@ namespace appLogger.Controllers
 
             // Environment dropdown list
             ViewBag.Envs = appName != null && loggingDatabases.ContainsKey(appName)
-                          ? loggingDatabases[appName].Keys.ToList()
-                          : [];
+                        ? loggingDatabases[appName].Keys.ToList()
+                        : [];
 
             // Selected values
             ViewBag.SelectedApp = appName ?? "";
             ViewBag.SelectedEnv = envName ?? "";
 
             // Logs
-            List<Logging> logs = new List<Logging>();
+            List<Logging> logs = [];
 
             if (!string.IsNullOrEmpty(appName) && !string.IsNullOrEmpty(envName))
             {
@@ -45,6 +46,14 @@ namespace appLogger.Controllers
                 logs = [.. context.Loggings.OrderByDescending(l => l.Timestamp)];
             }
 
+            // AJAX request returns JSON
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                Console.WriteLine("AJAX request received");
+                return Json(logs);
+            }
+            Console.WriteLine("Logs count: " + logs.Count);
+            // Normal page load returns View
             return View(logs);
         }
     }
