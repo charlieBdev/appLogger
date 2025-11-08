@@ -4,6 +4,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>appLogger-abc48a3b-2fa4-493b-b3f3-016d94ff4dfc</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>

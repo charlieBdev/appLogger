@@ -1,22 +1,37 @@
-html {
-  font-size: 14px;
+:root {
+  /* this has to be set to switch between light or dark */
+  color-scheme: light dark;
+
+  --light-bg: #e0e0e0;
+  --light-color: #121212;
+
+  --dark-bg: #121212;       /* very dark gray / almost black */
+  --dark-color: #e0e0e0;    /* light gray text */
 }
 
-@media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
+nav {
+    margin: 0;
+    padding: 0.5rem 1rem; /* adjust as needed */
+    background-color: light-dark(var(--light-bg), var(--dark-bg));
 }
 
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-html {
-  position: relative;
-  min-height: 100%;
+.nav-link {
+    color: light-dark(var(--light-color), var(--dark-color)) !important;
 }
 
 body {
-  margin-bottom: 60px;
+    margin: 0;
+    padding: 0;
+    background-color: light-dark(var(--light-bg), var(--dark-bg));
+    color: light-dark(var(--light-color), var(--dark-color));
+}
+
+select.form-select {
+    color: light-dark(var(--light-color), var(--dark-color));
+    background-color: light-dark(var(--light-bg), var(--dark-bg));
+}
+
+.table {
+    color: light-dark(var(--light-color), var(--dark-color));
+    background-color: light-dark(var(--light-bg), var(--dark-bg));
 }
