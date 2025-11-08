@@ -1,48 +1,5 @@
 # appLogger
 
-`appLogger` is an ASP.NET Core MVC application to **view logs from multiple PostgreSQL databases** for different applications and environments. It supports **dynamic database selection**, **light/dark theming**, and is configured to work with **local development databases** using PostgreSQL’s trust authentication.
-
----
-
-## Features
-
-* Select **Application** and **Environment** from dropdowns to view logs.
-* Multiple PostgreSQL databases configurable in `appsettings` or secrets.
-* **Light/Dark theme** with a simple `light-dark()` helper.
-* Uses **Entity Framework Core** to connect dynamically to selected databases.
-* Seedable logging table for testing.
-* Dropdowns refresh dynamically based on selected app.
-
----
-
-## Prerequisites
-
-* [.NET 8 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)
-* [PostgreSQL](https://www.postgresql.org/download/)
-* [VS Code](https://code.visualstudio.com/) or another IDE
-
----
-
-## Setup
-
-### 1. Clone the repository
-
-```bash
-git clone <repository-url>
-cd appLogger
-```
-
-### 2. Configure PostgreSQL
-
-Start PostgreSQL in the CLI before creating databases. Then create local databases for development (use general names):
-
-```sql
-CREATE DATABASE app1_dev;
-CREATE DATABASE app1_prod;
-CREATE DATABASE app2_test;
-CREATE DATABASE app2_prod;
-# appLogger
-
 `appLogger` is an ASP.NET Core MVC application to view logs from multiple PostgreSQL databases for different applications and environments. It supports dynamic database selection, light/dark theming, and is configured to work with local development databases using PostgreSQL’s trust authentication.
 
 ## Features
