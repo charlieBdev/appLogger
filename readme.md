@@ -23,7 +23,7 @@
 1. **Clone the repository** and enter the folder:
 
     ```bash
-    git clone <repository-url>
+    git clone https://github.com/charlieBdev/appLogger.git
     cd appLogger
     ```
 
