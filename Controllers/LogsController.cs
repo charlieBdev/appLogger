@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using appLogger.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace appLogger.Controllers
 {
@@ -15,45 +16,45 @@ namespace appLogger.Controllers
 
         public IActionResult Index(string? appName = null, string? envName = null)
         {
+            // Load full logging database config from appsettings/user-secrets
             var loggingDatabases = _config.GetSection("LoggingDatabases")
-                                          .Get<Dictionary<string, Dictionary<string, string>>>()!;
-
+                                        .Get<Dictionary<string, Dictionary<string, string>>>()!;
             if (loggingDatabases == null)
-                throw new InvalidOperationException("LoggingDatabases section missing in appsettings.json");
+                throw new InvalidOperationException("LoggingDatabases section missing.");
 
-            // Pass full dictionary for JS environment refresh
-            ViewBag.LoggingDatabases = loggingDatabases;
+            // --- Safe metadata for client ---
+            var envsPerApp = loggingDatabases.ToDictionary(
+                kvp => kvp.Key,
+                kvp => kvp.Value.Keys.ToList()
+            );
 
-            // App dropdown list
             ViewBag.Apps = loggingDatabases.Keys.ToList();
+            ViewBag.EnvsPerApp = envsPerApp;
 
-            // Environment dropdown list
-            ViewBag.Envs = appName != null && loggingDatabases.ContainsKey(appName)
-                        ? loggingDatabases[appName].Keys.ToList()
-                        : [];
-
-            // Selected values
-            ViewBag.SelectedApp = appName ?? "";
-            ViewBag.SelectedEnv = envName ?? "";
-
-            // Logs
+            // --- Query logs if app and env are selected ---
             List<Logging> logs = [];
-
             if (!string.IsNullOrEmpty(appName) && !string.IsNullOrEmpty(envName))
             {
-                var connString = loggingDatabases[appName][envName];
-                using var context = new LoggingContext(connString);
+                if (!loggingDatabases.TryGetValue(appName, out var envDict) ||
+                    !envDict.TryGetValue(envName, out var connString))
+                {
+                    return BadRequest("Invalid app or environment.");
+                }
+
+                var options = new DbContextOptionsBuilder<LoggingContext>()
+                                .UseNpgsql(connString)
+                                .Options;
+
+                using var context = new LoggingContext(options);
                 logs = [.. context.Loggings.OrderByDescending(l => l.Timestamp)];
             }
 
-            // AJAX request returns JSON
-            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            // --- Return JSON for AJAX, or View normally ---
+            if (Request.Headers.XRequestedWith == "XMLHttpRequest")
             {
-                Console.WriteLine("AJAX request received");
                 return Json(logs);
             }
-            Console.WriteLine("Logs count: " + logs.Count);
-            // Normal page load returns View
+
             return View(logs);
         }
     }

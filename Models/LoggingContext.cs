@@ -4,19 +4,14 @@ namespace appLogger.Models
 {
     public class LoggingContext : DbContext
     {
-        private readonly string _connectionString;
-
-        public LoggingContext(string connectionString)
+        // Constructor for dynamic options (e.g., dynamic connection string)
+        public LoggingContext(DbContextOptions<LoggingContext> options)
+            : base(options)
         {
-            _connectionString = connectionString;
         }
 
+        // DbSet for logs
         public DbSet<Logging> Loggings { get; set; } = null!;
-
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            optionsBuilder.UseNpgsql(_connectionString);
-        }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -27,6 +22,7 @@ namespace appLogger.Models
                 entity.Property(e => e.Timestamp).HasColumnName("timestamp");
                 entity.Property(e => e.Level).HasColumnName("level");
                 entity.Property(e => e.Message).HasColumnName("message");
+                entity.Property(e => e.Username).HasColumnName("username");
             });
         }
     }

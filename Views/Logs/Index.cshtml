@@ -1,13 +1,12 @@
 @model List<appLogger.Models.Logging>
+@using System.Text.Json
 
 @{
     ViewData["Title"] = "Logs Page";
 
+    // Full loggingDatabases is on server only
     var apps = ViewBag.Apps as List<string> ?? new List<string>();
-    var envs = ViewBag.Envs as List<string> ?? new List<string>();
-    var selectedApp = ViewBag.SelectedApp as string ?? "";
-    var selectedEnv = ViewBag.SelectedEnv as string ?? "";
-    var loggingDatabases = ViewBag.LoggingDatabases;
+    var envsPerApp = ViewBag.EnvsPerApp as Dictionary<string, List<string>> ?? new Dictionary<string, List<string>>();
 }
 
 <h2>Logs</h2>
@@ -20,7 +19,7 @@
                 <option value="">Select App</option>
                 @foreach (var app in apps)
                 {
-                    <option value="@app" selected="@(selectedApp == app)">@app</option>
+                    <option value="@app">@app</option>
                 }
             </select>
         </div>
@@ -29,10 +28,6 @@
             <label for="envName" class="form-label">Environment:</label>
             <select id="envName" name="envName" class="form-select">
                 <option value="">Select Environment</option>
-                @foreach (var env in envs)
-                {
-                    <option value="@env" selected="@(selectedEnv == env)">@env</option>
-                }
             </select>
         </div>
 
@@ -47,19 +42,20 @@
 
 @section Scripts {
 <script>
-    const loggingDatabases = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(loggingDatabases));
+    const envsPerApp = @Html.Raw(JsonSerializer.Serialize(envsPerApp));
     const appSelect = document.getElementById('appName');
     const envSelect = document.getElementById('envName');
     const form = document.getElementById('filterForm');
     const logsContainer = document.getElementById('logsContainer');
     const appAndEnvShown = document.getElementById('appAndEnvShown');
 
-    // Refresh environments when app changes
-    appSelect.addEventListener('change', function () {
-        const selectedApp = this.value;
+    // Populate environments when app changes
+    appSelect.addEventListener('change', () => {
+        const selectedApp = appSelect.value;
         envSelect.innerHTML = '<option value="">Select Environment</option>';
-        if (selectedApp && loggingDatabases[selectedApp]) {
-            Object.keys(loggingDatabases[selectedApp]).forEach(env => {
+
+        if (selectedApp && envsPerApp[selectedApp]) {
+            envsPerApp[selectedApp].forEach(env => {
                 const option = document.createElement('option');
                 option.value = env;
                 option.text = env;
@@ -68,8 +64,8 @@
         }
     });
 
-    // Submit form via AJAX, update table without reload
-    form.addEventListener('submit', function (event) {
+    // Submit form via AJAX
+    form.addEventListener('submit', event => {
         event.preventDefault();
         const appName = appSelect.value;
         const envName = envSelect.value;
@@ -79,24 +75,27 @@
             return;
         }
 
+        logsContainer.innerHTML = '<p>Loading logs...</p>';
+
+        // Server-side fetch — connection strings are never exposed to the client
         fetch(`@Url.Action("Index", "Logs")?appName=${appName}&envName=${envName}`, {
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
         })
-        .then(response => response.json())
+        .then(res => res.json())
         .then(logs => {
             if (!logs.length) {
                 logsContainer.innerHTML = '<p>No logs to display.</p>';
                 return;
             }
 
-            // Build table dynamically
-            let html = '<table class="table"><thead><tr><th>Id</th><th>Timestamp</th><th>Level</th><th>Message</th></tr></thead><tbody>';
+            let html = '<table class="table"><thead><tr><th>Id</th><th>Timestamp</th><th>Level</th><th>Message</th><th>Username</th></tr></thead><tbody>';
             logs.forEach(log => {
                 html += `<tr>
                             <td>${log.id}</td>
-                            <td>${log.timestamp}</td>
+                            <td>${new Date(log.timestamp).toLocaleString()}</td>
                             <td>${log.level}</td>
                             <td>${log.message}</td>
+                            <td>${log.username}</td>
                         </tr>`;
             });
             html += '</tbody></table>';
@@ -109,5 +108,8 @@
             console.error(err);
         });
     });
+
+    const apps = @Html.Raw(JsonSerializer.Serialize(apps));
+    console.log(apps, envsPerApp);
 </script>
 }
